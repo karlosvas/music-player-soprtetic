@@ -1,0 +1,214 @@
+---
+import Layout from "../layouts/Layout.astro"
+import { mp3Files } from "./index.astro"
+
+export async function getStaticPaths() {
+  return mp3Files.map((id) => ({ params: { id } }));
+}
+
+const getRandomNumber = () => Math.floor(Math.random() * 23) + 1;
+
+const { id } = Astro.params;
+
+
+---
+<Layout title={id}>
+    <script defer src="https://kit.fontawesome.com/c5a3a92ff4.js" crossorigin="anonymous"></script>
+    <main>
+        <div class="container">
+            <div class="music-player">
+                <nav>
+                    <a href="/">
+                        <div class="circle">
+                            <i class="fa-solid fa-angle-left"></i> 
+                        </div>
+                    </a>
+                    <div class="circle">
+                        <i class="fa-solid fa-bars"></i>
+                    </div>
+                </nav>
+                <img src={`photo/photo${getRandomNumber()}.jpg`} class="song-img">
+                <h1>{id}</h1>
+                <p>Descripcion</p>
+                
+                <audio id="song">
+                    <source src={`music/${id}.mp3`} type="audio/mpeg">
+                </audio>
+                <input type="range" value="0" id="progress">
+                <div class="controls">
+                    <div><i class="fa-solid fa-backward"></i></div>
+                    <div onclick="playPause()"><i class="fa-solid fa-play" id="ctrlIcon"></i></div>
+                    <div><i class="fa-solid fa-forward"></i></div>
+                </div>
+            </div>
+        </div>        
+    </main>
+</Layout>
+
+<script>
+    let progress = document.getElementById("progress") as HTMLInputElement;
+    let song = document.getElementById("song") as HTMLAudioElement;
+    let ctrlIcon = document.getElementById("ctrlIcon") as HTMLElement;
+
+    song.onloadedmetadata = function(){
+        progress.max = song.duration.toString();
+        progress.value = song.currentTime.toString();
+    }
+
+    function playPause(){
+       if(ctrlIcon.classList.contains("fa-pause")) {
+            song.pause();
+            ctrlIcon.classList.remove('fa-pause');
+            ctrlIcon.classList.add('fa-play');
+       } else{
+            const playpromise = song.play();
+            ctrlIcon.classList.remove('fa-play');
+            ctrlIcon.classList.add('fa-pause');
+            if(playpromise !== undefined) {
+                setInterval(()=>{
+                    progress.value = song.currentTime.toString();
+                },500);
+            }
+       }
+    }
+
+    progress.onchange = function() {
+        song.play();
+        song.currentTime = parseInt(progress.value);
+        ctrlIcon.classList.remove('fa-play');
+        ctrlIcon.classList.add('fa-pause');
+    }
+
+    declare global {
+    interface Window {
+        playPause: () => void;
+    }
+}
+
+    window.playPause = playPause;
+</script>
+</body>
+</html>
+
+<style>
+    * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    }
+
+    :root {
+        --primary-color: #f53192;
+        --secondary-color: #fff;
+        --background-color: #ffe0e5;
+        --text-color: #333;
+        --box-shadow-color: rgba(255, 26, 26, 0.22);
+    }
+
+    .container {
+        margin-top: 100px;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .music-player {
+        border-radius: 10px;
+        background-color: var(--background-color);
+        width: 500px;
+        height: 80vh;
+        padding: 25px 35px;
+        text-align: center;
+        box-shadow: 0 10px 60px var(--box-shadow-color);
+    }
+
+    nav {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 30px;
+    }
+
+    nav .circle {
+        border-radius: 50px;
+        width: 40px;
+        height: 40px;
+        line-height: 40px;
+        background-color: var(--secondary-color);
+        color: var(--primary-color);
+        box-shadow: 0 5px 10px var(--box-shadow-color);
+    }
+
+    .song-img {
+        background: #333;
+        overflow: hidden;
+        width: 290px;
+        height: 300px;
+        border-radius: 50%;
+        border: 8px solid var(--secondary-color);
+        box-shadow: 0 10px 60px var(--box-shadow-color);
+        object-fit: contain;
+    }
+
+
+    
+    .music-player h1 {
+        color: var(--text-color);
+        margin-top: 20px;
+    }
+
+    .music-player p {
+        color: var(--text-color);
+    }
+
+    #progress {
+        width: 100%;
+        height: 6px;
+        background: var(--primary-color);
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 40px 0;
+        outline: none; /* Para quitar el borde de enfoque en todos los navegadores */
+    }
+
+    #progress::-webkit-slider-thumb,
+    #progress::-moz-range-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        background: var(--primary-color);
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        border: 8px solid var(--secondary-color);
+        box-shadow: 0 5px 5px var(--box-shadow-color);
+    }
+
+    .controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .controls div {
+        width: 60px;
+        height: 60px;
+        margin: 20px;
+        background: var(--secondary-color);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        color: var(--primary-color);
+        box-shadow: 0 10px 20px var(--box-shadow-color);
+        cursor: pointer;
+    }
+
+    .controls div:nth-child(2) {
+        transform: scale(1.5);
+        background: var(--primary-color);
+        color: var(--secondary-color);
+    }
+
+</style>
