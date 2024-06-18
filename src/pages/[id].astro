@@ -1,15 +1,20 @@
 ---
 import Layout from "../layouts/Layout.astro"
 import { mp3Files } from "./index.astro"
+import { transcribeFile } from '../scripts/server/deepgram'
+
+const { id } = Astro.params;
 
 export async function getStaticPaths() {
   return mp3Files.map((id) => ({ params: { id } }));
 }
 
-const getRandomNumber = () => Math.floor(Math.random() * 23) + 1;
+let MOD = mp3Files.length;
+const getRandomNumber = () => Math.floor(Math.random() * MOD);
 
-const { id } = Astro.params;
+const transcript: string | undefined = await transcribeFile(id);
 
+const actualSong = mp3Files.indexOf(id);
 
 ---
 <Layout title={id}>
@@ -28,93 +33,75 @@ const { id } = Astro.params;
                     </div>
                 </nav>
                 <img src={`photo/photo${getRandomNumber()}.jpg`} class="song-img">
-                <h1>{id}</h1>
-                <p>Descripcion</p>
+                <h1 id="title">{id}</h1>
+                <p id="lyrics" class="">
+                </p>
                 
                 <audio id="song">
                     <source src={`music/${id}.mp3`} type="audio/mpeg">
                 </audio>
-                <input type="range" value="0" id="progress">
+                <input type="range" id="progress" value="0" min="0" step="0.01">
                 <div class="controls">
-                    <div><i class="fa-solid fa-backward"></i></div>
+                    <a href=`${actualSong > 0 ? mp3Files[actualSong - 1] : '#'}`>
+                        <div><i class="fa-solid fa-backward"></i></div>
+                    </a>
                     <div onclick="playPause()"><i class="fa-solid fa-play" id="ctrlIcon"></i></div>
-                    <div><i class="fa-solid fa-forward"></i></div>
+                    <a href=`${ mp3Files[ (actualSong + 1) % MOD]}`>
+                        <div><i class="fa-solid fa-forward"></i></div>
+                    </a>
                 </div>
             </div>
         </div>        
     </main>
 </Layout>
 
+<script src="../scripts/client/audio-player.ts"></script>
 <script>
-    let progress = document.getElementById("progress") as HTMLInputElement;
-    let song = document.getElementById("song") as HTMLAudioElement;
-    let ctrlIcon = document.getElementById("ctrlIcon") as HTMLElement;
-
-    song.onloadedmetadata = function(){
-        progress.max = song.duration.toString();
-        progress.value = song.currentTime.toString();
-    }
-
-    function playPause(){
-       if(ctrlIcon.classList.contains("fa-pause")) {
-            song.pause();
-            ctrlIcon.classList.remove('fa-pause');
-            ctrlIcon.classList.add('fa-play');
-       } else{
-            const playpromise = song.play();
-            ctrlIcon.classList.remove('fa-play');
-            ctrlIcon.classList.add('fa-pause');
-            if(playpromise !== undefined) {
-                setInterval(()=>{
-                    progress.value = song.currentTime.toString();
-                },500);
-            }
-       }
-    }
-
-    progress.onchange = function() {
-        song.play();
-        song.currentTime = parseInt(progress.value);
-        ctrlIcon.classList.remove('fa-play');
-        ctrlIcon.classList.add('fa-pause');
-    }
-
-    declare global {
-    interface Window {
-        playPause: () => void;
-    }
-}
-
-    window.playPause = playPause;
+    import {cargarJSON, lyrics} from '../scripts/client/lyrics.ts'
+    cargarJSON()
+    .then((data) =>{
+        const titleElement = document.getElementById('title');
+        const key: string = titleElement?.textContent || '';
+        lyrics(data[key]);
+    }).catch((e) => console.error(e))
 </script>
 </body>
 </html>
 
 <style>
-    * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+    :root {
+        --primary-color: #1a5276; /* Azul primario más oscuro */
+        --secondary-color: #fff; /* Blanco */
+        --background-color: #a3d8f5; /* Azul claro para el fondo */
+        --text-color: #333; /* Color de texto oscuro */
+        --box-shadow-color: rgba(26, 82, 118, 0.22); /* Sombra de caja azul más oscuro */
     }
 
-    :root {
-        --primary-color: #f53192;
-        --secondary-color: #fff;
-        --background-color: #ffe0e5;
-        --text-color: #333;
-        --box-shadow-color: rgba(255, 26, 26, 0.22);
+    #lyrics {
+        border-radius: 1px;
+        color: var(--secondary-color);
+        overflow: hidden;
+        max-height: 90px;
+        font-size: 20px;
+        line-height: 1.5;
+        color: #333;
+        font-family: 'Circular Std', Arial, sans-serif;   
+        overflow-y: auto; 
+    }
+
+    #lyrics .hilight {
+        color: red;
     }
 
     .container {
-        margin-top: 100px;
-        width: 100%;
-        height: 100%;
+        width: 100vw;
+        height: 100vh;
         display: flex;
         justify-content: center;
         align-items: center;
         flex-wrap: wrap;
     }
-
+    
     .music-player {
         border-radius: 10px;
         background-color: var(--background-color);
@@ -142,25 +129,19 @@ const { id } = Astro.params;
     }
 
     .song-img {
-        background: #333;
+        background: var(--secondary-color);
         overflow: hidden;
         width: 290px;
         height: 300px;
         border-radius: 50%;
         border: 8px solid var(--secondary-color);
         box-shadow: 0 10px 60px var(--box-shadow-color);
-        object-fit: contain;
+        object-fit: cover;
     }
-
-
     
     .music-player h1 {
         color: var(--text-color);
         margin-top: 20px;
-    }
-
-    .music-player p {
-        color: var(--text-color);
     }
 
     #progress {

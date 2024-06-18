@@ -2,9 +2,8 @@
 import Layout from '../layouts/Layout.astro';
 import Card from '../components/Card.astro';
 
-import { getNamesMP3 } from '../scripts/music';
+import { getNamesMP3 } from '../scripts/server/music';
 export const mp3Files = await getNamesMP3()
-
 ---
 
 <Layout title="Soporte TIC">
@@ -20,7 +19,6 @@ export const mp3Files = await getNamesMP3()
 					<Card
 						href={`/${audio}`}
 						title={audio}
-						body="Learn how Astro works and explore the official API docs."
 					/>
 				))
 			}

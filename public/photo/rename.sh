@@ -22,7 +22,7 @@ generate_unique_name() {
     local new_name
     local original_name="$file"
     local renamed_files_str=$(read_log_file)
-    local count=1
+    local count=0
 
     while true; do
         new_name="photo${count}.${extension}"
@@ -35,7 +35,7 @@ generate_unique_name() {
 }
 
 # Iterar sobre todos los archivos de imagen en el directorio
-count=1
+count=0
 for file in *.{jpg,jpeg,png,gif}; do
     if [[ -f "$file" ]]; then
         extension="${file##*.}"
