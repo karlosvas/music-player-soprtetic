@@ -1,28 +1,34 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import Card from '../components/Card.astro';
+import FolderCard from '../components/FolderCard.astro';
 
 import { getNamesMP3 } from '../scripts/server/music';
 export const mp3Files = await getNamesMP3()
+
+export const Folders = ['SoporteTIC', 'Jokes', 'Ana, Carmen, Carlos'];
 ---
 
 <Layout title="Soporte TIC">
 	<main>
-		<h1> Bienvenido a <span class="text-gradient"> Soporte TIC </span></h1>
+		<h1> Bienvenido a <span class="text-gradient"> Music IA </span></h1>
 		<p class="instructions">
-			Bienvenid@ a la mejor experiencia sonora <code>soporteTIC</code> en ella.<br />
-			<strong>Te deleitarás con temazos</strong> para todos los colores, sabores y gustos.
+			Bienvenid@ a <code>la mejor experiencia sonora.</code> <br>
+			<strong>Te deleitarás con temazos</strong> para todos los gustos y sabores.
 		</p>
-		<ul role="list" class="link-card-grid">
-			{ 
-				mp3Files.map((audio) => (
-					<Card
-						href={`/${audio}`}
-						title={audio}
-					/>
-				))
-			}
-		  </ul>
+		<FolderCard
+			href={`folderSoporteTIC`}
+			title="SoporteTIC"
+		/>
+		<br>
+		<FolderCard
+			href={`folderJokes`}
+			title="Jokes"
+		/>
+		<br>
+		<FolderCard
+			href={`folderAna, Carmen, Carlos`}
+			title="Ana, Carmen, Carlos"
+		/>
 	</main>
 </Layout>
 
