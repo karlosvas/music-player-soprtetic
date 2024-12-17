@@ -1,214 +1,371 @@
 ---
-import Layout from "../layouts/Layout.astro"
-import { mp3Files } from "./index.astro"
-import { transcribeFile } from '../scripts/server/deepgram'
+import Layout from "../layouts/Layout.astro";
+import { mp3Files } from "./index.astro";
+import { transcribeFile } from "../scripts/server/deepgram";
+import { isImageLoad, generateImage } from "../scripts/client/image-loader";
 
+// Cada una de las publicaciones de la carpeta, nombre de la cancion
 const { id } = Astro.params;
-
-export async function getStaticPaths() {
-  return mp3Files.map((id) => ({ params: { id } }));
+if (id === undefined) {
+  console.error("No se ha proporcionado un ID al cargar la ruta de astro");
+  throw Astro.redirect("/404");
 }
 
-let MOD: number = parseInt(process.env.MAXFOTOS ?? '0', 10);
+export async function getStaticPaths() {
+  const mp3Paths = mp3Files.map((id) => ({ params: { id } }));
+  return [...mp3Paths];
+}
 
-const getRandomNumber = () => Math.floor(Math.random() * MOD);
+// Número de elementos en mp3Files
+let MOD: number = mp3Files.length ?? 0;
 
-const transcript: string | undefined = await transcribeFile(id);
+// Transformamos el audio .mp3 a texto
+const transcript: string = await transcribeFile(id);
+if (transcript == "") {
+  console.error("Transcript is undefined, error loading letters");
+}
 
-const exceptional = ['SoporteTIC unidos', 'Ritmo SoporteTIC', 'Buenos dias SoporteTIC(Joke)', 'Hasta luego'];
-const actualSong = mp3Files.indexOf(id);
+// Preguntamos si tiene imagen
+const src = await isImageLoad(id);
+// No se ha encontrado imagen
+if (!src) {
+  const img = await generateImage(id);
+  console.log("Imagen generada", img);
+}
 
+const actualSong: number = mp3Files.indexOf(id ?? "");
+if (actualSong == -1) {
+  console.error("No se ha encontrado la cancion en la lista de canciones");
+  throw Astro.redirect("/404");
+}
 ---
-<Layout title={id}>
-    <script defer src="https://kit.fontawesome.com/c5a3a92ff4.js" crossorigin="anonymous"></script>
-    <main>
-        <div class="container">
-            <div class="music-player">
-                <nav>
-                    <a href="/">
-                        <div class="circle">
-                            <i class="fa-solid fa-angle-left"></i> 
-                        </div>
-                    </a>
-                    <div class="circle">
-                        <i class="fa-solid fa-bars"></i>
-                    </div>
-                </nav>
-                {
-                exceptional.includes(id)
-                ?
-                <img src={`photo/SoporteTIC/${Math.floor(Math.random() * 3)}.png`} class="song-img" />
-                :
-                <img src={`photo/photo${getRandomNumber()}.jpg`} class="song-img" />
-                }
-                <h1 id="title">{id}</h1>
-                <p id="lyrics" class="">
-                </p>
-                
-                <audio id="song">
-                    <source src={`music/${id}.mp3`} type="audio/mpeg">
-                </audio>
-                <input type="range" id="progress" value="0" min="0" step="0.01">
-                <div class="controls">
-                    <a href=`${actualSong > 0 ? mp3Files[actualSong - 1] : '#'}`>
-                        <div><i class="fa-solid fa-backward"></i></div>
-                    </a>
-                    <div onclick="playPause()"><i class="fa-solid fa-play" id="ctrlIcon"></i></div>
-                    <a href=`${ mp3Files[ (actualSong + 1) % mp3Files.length]}`>
-                        <div><i class="fa-solid fa-forward"></i></div>
-                    </a>
-                </div>
+
+<Layout title={id ?? ""}>
+  <main>
+    <div class="container">
+      <div class="music-player">
+        <!-- Navegar entre canciones -->
+        <nav>
+          <a href="/">
+            <div class="circle">
+              <i class="fa-solid fa-angle-left"></i>
             </div>
-        </div>        
-    </main>
+          </a>
+          <div class="circle">
+            <i class="fa-solid fa-bars"></i>
+          </div>
+        </nav>
+        <!-- Imagen de la canción -->
+        <img src={`photo/photo${actualSong}.jpg`} class="song-img" />
+        <!-- Título -->
+        <h1 id="title">{id}</h1>
+        <!-- Letra de la canción -->
+        <p id="lyrics" class=""></p>
+        <!-- Reproductor de música -->
+        <audio id="song">
+          <source src=`${src}.mp3` type="audio/mpeg" />
+        </audio>
+        <!-- Barra de progreso -->
+        <input type="range" id="progress" value="0" min="0" step="0.01" />
+        <!-- Navegar entre canciones -->
+        <div class="controls">
+          <!-- Si la cancion enterior es la primera, se redirige a la ultima si no la anterior -->
+          <a href=`${actualSong == 0 ? mp3Files[MOD-1] : mp3Files[actualSong - 1]}`>
+            <div><i class="fa-solid fa-backward"></i></div>
+          </a>
+          <div onclick="playPause()"><i class="fa-solid fa-play" id="ctrlIcon"></i></div>
+          <!-- Ir hacia delante si es la ultima vuelve al principio -->
+          <a href={`${mp3Files[(actualSong + 1) % MOD]}`}>
+            <div><i class="fa-solid fa-forward"></i></div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </main>
 </Layout>
 
 <script src="../scripts/client/audio-player.ts"></script>
 <script>
-    import {cargarJSON, lyrics} from '../scripts/client/lyrics.ts'
-    cargarJSON()
-    .then((data) =>{
-        const titleElement = document.getElementById('title');
-        const key: string = titleElement?.textContent || '';
-        lyrics(data[key]);
-    }).catch((e) => console.error(e))
+  // Scripts del cliente para cargar la letra de la cancion
+  import { cargarLyrics, lyrics } from "../scripts/client/lyrics";
+  cargarLyrics()
+    .then((data) => {
+      // Obtenemos el titulo de la cancion y se lo asiganmos al titulo
+      const titleElement: HTMLElement = document.getElementById("title") as HTMLElement;
+      // Dibuja dinamicamente según se lea el texto en la cancion, accediendo a la letra de la cancion
+      const key: string = titleElement?.textContent || "";
+      lyrics(data[key]);
+    })
+    .catch((e) => console.error(e));
 </script>
-</body>
-</html>
 
 <style>
+  :root {
+    --primary-color: #174562;
+    --secondary-color: #ddd;
+    --background-color: #8ac6e9;
+    --text-color: #222;
+  }
 
-    :root {
-        --primary-color: #174562; 
-        --secondary-color: #ddd;
-        --background-color: #8ac6e9;
-        --text-color: #222;
-    }
+  #lyrics {
+    border-radius: 1px;
+    color: var(--secondary-color);
+    height: 100px;
+    font-size: 20px;
+    line-height: 1.5;
+    color: #333;
+    font-family: "Circular Std", Arial, sans-serif;
+    overflow-y: auto;
+  }
 
-    #lyrics {
-        border-radius: 1px;
-        color: var(--secondary-color);
-        height: 100px;
-        font-size: 20px;
-        line-height: 1.5;
-        color: #333;
-        font-family: 'Circular Std', Arial, sans-serif;   
-        overflow-y: auto; 
-    }
+  #lyrics .hilight {
+    /* color: red; */
+  }
 
-    #lyrics .hilight {
-        /* color: red; */
-    }
+  .container {
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+  }
 
-    .container {
-        overflow: hidden;
-        width: 100vw;
-        height: 100vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-wrap: wrap;
-    }
-    
+  .music-player {
+    border-radius: 10px;
+    background-color: var(--background-color);
+    width: 500px;
+    height: 80vh;
+    padding: 25px 35px;
+    text-align: center;
+    box-shadow: 0 10px 60px var(--box-shadow-color);
+  }
+
+  nav {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+  }
+
+  nav .circle {
+    border-radius: 50px;
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    background-color: var(--secondary-color);
+    color: var(--primary-color);
+    box-shadow: 0 5px 10px var(--box-shadow-color);
+  }
+
+  .song-img {
+    background: var(--secondary-color);
+    overflow: hidden;
+    width: 290px;
+    height: 300px;
+    border-radius: 50%;
+    border: 8px solid var(--secondary-color);
+    box-shadow: 0 10px 60px var(--box-shadow-color);
+    object-fit: cover;
+  }
+
+  .music-player h1 {
+    color: var(--text-color);
+    margin-top: 20px;
+  }
+
+  #progress {
+    width: 100%;
+    height: 6px;
+    background: var(--primary-color);
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 40px 0;
+    outline: none;
+  }
+
+  #progress::-webkit-slider-thumb,
+  #progress::-moz-range-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--primary-color);
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 8px solid var(--secondary-color);
+    box-shadow: 0 5px 5px var(--box-shadow-color);
+  }
+
+  .controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .controls div {
+    width: 60px;
+    height: 60px;
+    margin-left: 20px;
+    margin-right: 20px;
+    background: var(--secondary-color);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: var(--primary-color);
+    box-shadow: 0 10px 20px var(--box-shadow-color);
+    cursor: pointer;
+  }
+
+  .controls div:nth-child(2) {
+    transform: scale(1.5);
+    background: var(--primary-color);
+    color: var(--secondary-color);
+  }
+
+  @media only screen and (max-width: 768px) {
     .music-player {
-        border-radius: 10px;
-        background-color: var(--background-color);
-        width: 500px;
-        height: 80vh;
-        padding: 25px 35px;
-        text-align: center;
-        box-shadow: 0 10px 60px var(--box-shadow-color);
+      width: 500px;
+      height: 100vh;
     }
 
     nav {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 30px;
+      margin-bottom: 0px;
+    }
+  }
+</style>
+<style>
+  :root {
+    --primary-color: #174562;
+    --secondary-color: #ddd;
+    --background-color: #8ac6e9;
+    --text-color: #222;
+  }
+
+  #lyrics {
+    border-radius: 1px;
+    color: var(--secondary-color);
+    height: 100px;
+    font-size: 20px;
+    line-height: 1.5;
+    color: #333;
+    font-family: "Circular Std", Arial, sans-serif;
+    overflow-y: auto;
+  }
+
+  #lyrics .hilight {
+    /* color: red; */
+  }
+
+  .container {
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .music-player {
+    border-radius: 10px;
+    background-color: var(--background-color);
+    width: 500px;
+    height: 80vh;
+    padding: 25px 35px;
+    text-align: center;
+    box-shadow: 0 10px 60px var(--box-shadow-color);
+  }
+
+  nav {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+  }
+
+  nav .circle {
+    border-radius: 50px;
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    background-color: var(--secondary-color);
+    color: var(--primary-color);
+    box-shadow: 0 5px 10px var(--box-shadow-color);
+  }
+
+  .song-img {
+    background: var(--secondary-color);
+    overflow: hidden;
+    width: 290px;
+    height: 300px;
+    border-radius: 50%;
+    border: 8px solid var(--secondary-color);
+    box-shadow: 0 10px 60px var(--box-shadow-color);
+    object-fit: cover;
+  }
+
+  .music-player h1 {
+    color: var(--text-color);
+    margin-top: 20px;
+  }
+
+  #progress {
+    width: 100%;
+    height: 6px;
+    background: var(--primary-color);
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 40px 0;
+    outline: none;
+  }
+
+  #progress::-webkit-slider-thumb,
+  #progress::-moz-range-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--primary-color);
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 8px solid var(--secondary-color);
+    box-shadow: 0 5px 5px var(--box-shadow-color);
+  }
+
+  .controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .controls div {
+    width: 60px;
+    height: 60px;
+    margin-left: 20px;
+    margin-right: 20px;
+    background: var(--secondary-color);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: var(--primary-color);
+    box-shadow: 0 10px 20px var(--box-shadow-color);
+    cursor: pointer;
+  }
+
+  .controls div:nth-child(2) {
+    transform: scale(1.5);
+    background: var(--primary-color);
+    color: var(--secondary-color);
+  }
+
+  @media only screen and (max-width: 768px) {
+    .music-player {
+      width: 500px;
+      height: 100vh;
     }
 
-    nav .circle {
-        border-radius: 50px;
-        width: 40px;
-        height: 40px;
-        line-height: 40px;
-        background-color: var(--secondary-color);
-        color: var(--primary-color);
-        box-shadow: 0 5px 10px var(--box-shadow-color);
+    nav {
+      margin-bottom: 0px;
     }
-
-    .song-img {
-        background: var(--secondary-color);
-        overflow: hidden;
-        width: 290px;
-        height: 300px;
-        border-radius: 50%;
-        border: 8px solid var(--secondary-color);
-        box-shadow: 0 10px 60px var(--box-shadow-color);
-        object-fit: cover;
-    }
-    
-    .music-player h1 {
-        color: var(--text-color);
-        margin-top: 20px;
-    }
-
-    #progress {
-        width: 100%;
-        height: 6px;
-        background: var(--primary-color);
-        border-radius: 4px;
-        cursor: pointer;
-        margin: 40px 0;
-        outline: none; 
-    }
-
-    #progress::-webkit-slider-thumb,
-    #progress::-moz-range-thumb {
-        -webkit-appearance: none;
-        appearance: none;
-        background: var(--primary-color);
-        width: 15px;
-        height: 15px;
-        border-radius: 50%;
-        border: 8px solid var(--secondary-color);
-        box-shadow: 0 5px 5px var(--box-shadow-color);
-    }
-
-    .controls {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .controls div {
-        width: 60px;
-        height: 60px;
-        margin-left: 20px; 
-        margin-right: 20px;
-        background: var(--secondary-color);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        color: var(--primary-color);
-        box-shadow: 0 10px 20px var(--box-shadow-color);
-        cursor: pointer;
-    }
-
-    .controls div:nth-child(2) {
-        transform: scale(1.5);
-        background: var(--primary-color);
-        color: var(--secondary-color);
-    }
-
-    @media only screen and (max-width: 768px) {
-        .music-player {
-            width: 500px;
-            height: 100vh;
-        }
-
-        nav {
-            margin-bottom: 0px;
-        }
-    }
+  }
 </style>

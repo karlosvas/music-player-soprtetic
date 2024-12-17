@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Archivo de registro para almacenar los nombres de archivo modificados
+cd "$(dirname "$0")"
 log_file="renamed_files.log"
 
 # Inicializa el archivo de registro si no existe
