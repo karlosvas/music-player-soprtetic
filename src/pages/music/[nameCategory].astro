@@ -1,0 +1,213 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Card from "@/components/Card.astro";
+import type { Category, Song } from "@/types/types";
+import { getAllCategories, getSongsByCategory } from "@/db/db";
+import ReusableButton from "@/components/ReusableButton.astro";
+import ReusableModal from "@/components/ReusableModal.astro";
+
+// Categorías de canciones
+let Folders: Array<Category> = [];
+// Cargar las categorías
+try {
+  Folders = getAllCategories();
+} catch (error) {
+  console.error("Error al cargar las categorías:", error);
+  throw new Error("No se pudieron cargar las categorías de música");
+}
+
+// Creación de rutas para cada carpeta y cada canción
+export async function getStaticPaths() {
+  const folderPaths: Array<{ params: { nameCategory: string } }> = Folders.map((category: Category) => ({
+    params: { nameCategory: category.name },
+  }));
+  return folderPaths;
+}
+
+// Recuperamos los parámetros de la ruta, y obtenemos los nombres de las canciones en la categoría
+const { nameCategory } = Astro.params;
+const mp3Files = getSongsByCategory(nameCategory) || [];
+---
+
+<!-- Categorita al entrar en una carpeta -->
+<Layout title="Categories">
+   <main data-name-category={nameCategory} id="main-content">
+        <span>
+          <a href="/">Exit</a>
+        </span>
+  {
+    mp3Files.length === 0 ? (
+      <p class="instructions">
+        No hay canciones en esta categoría 😭
+      </p>
+    ) : (
+        <h1>{nameCategory}</h1>
+        <ul role="list" class="link-card-grnameCategory">
+          {mp3Files.map((audio: Song) => (
+            <Card href={`/music/${nameCategory}/${audio.title}`} title={audio.title} />
+          ))}
+        </ul>
+  )}
+    <ReusableButton id="btn-create-song">Crear Canción</ReusableButton>
+    <ReusableModal id="modal-create-song">
+          <>
+            <h1>Crear Canción</h1>
+              <input type="text" placeholder="Nombre de la canción" autocomplete="off" class="modal-create-song-input" />
+              <input type="text" placeholder="Tag, ej (rock, pop, techno)" autocomplete="off" class="modal-create-song-input" />
+            <textarea name="data" id="prompt" placeholder="Define como quieres que sea la canción"></textarea>
+          </>
+        </ReusableModal>
+    </main>
+</Layout>
+
+<style>
+  main {
+    margin: auto;
+    padding: 1rem;
+    wnamecategoryth: 800px;
+    max-wnamecategoryth: calc(100% - 2rem);
+    color: white;
+    font-size: 20px;
+    line-height: 1.6;
+
+    span > a {
+      color: var(--secondary-color);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 1.2rem;
+    }
+
+    #btn-create-song {
+      position: fixed;
+      right: 20px;
+      background-color: var(--primary-color);
+      color: var(--secondary-color);
+      padding: 10px 20px;
+      border-radius: 5px;
+      box-shadow: 0 5px 10px var(--box-shadow-color);
+      cursor: pointer;
+    }
+
+    #modal-create-song {
+      h1 {
+        font-size: 2rem;
+        margin-bottom: 2rem;
+      }
+    }
+  }
+  .astro-a {
+    position: absolute;
+    top: -32px;
+    left: 50%;
+    transform: translatex(-50%);
+    wnamecategoryth: 220px;
+    height: auto;
+    z-index: -1;
+  }
+  h1 {
+    font-size: 4rem;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    margin-bottom: 1em;
+  }
+  .text-gradient {
+    background-image: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-size: 400%;
+    background-position: 0%;
+  }
+  .instructions {
+    margin-bottom: 2rem;
+    border: 1px solnameCategory rgba(var(--accent-light), 25%);
+    background: linear-gradient(rgba(var(--accent-dark), 66%), rgba(var(--accent-dark), 33%));
+    padding: 1.5rem;
+    border-radius: 8px;
+  }
+  .instructions code {
+    font-size: 0.8em;
+    font-weight: bold;
+    background: rgba(var(--accent-light), 12%);
+    color: rgb(var(--accent-light));
+    border-radius: 4px;
+    padding: 0.3em 0.4em;
+  }
+  .instructions strong {
+    color: rgb(var(--accent-light));
+  }
+  .link-card-grnameCategory {
+    display: grnameCategory;
+    grnamecategory-template-columns: repeat(auto-fit, minmax(24ch, 1fr));
+    gap: 2rem;
+    padding: 0;
+  }
+</style>
+
+<script>
+  import { createSong, deleteSong, createTranscript } from "@/scripts/client/categories";
+
+  // Función para manejar la creación de una canción
+  async function handleSong(inputCategory: Array<HTMLInputElement>, modalDialog: HTMLDialogElement) {
+    const inputTitle = inputCategory[0];
+    const name = inputTitle.value.trim();
+    const main = document.getElementById("main-content");
+    if (name && main) {
+      const nameCategory: string | null = main.getAttribute("data-name-category");
+      if (!nameCategory) return;
+      
+      const normalizedName = name.toLowerCase().replace(/\s+/g, "-");
+      const src =  "/photo/"+ normalizedName + ".png";
+      const transcript: string = await createTranscript(normalizedName);
+      const prompt: string = (document.getElementById("prompt") as HTMLTextAreaElement).value.trim();
+      const tag: string = "music";
+
+      await createSong(name, nameCategory, transcript, src, prompt, tag)
+      modalDialog.close();
+      window.location.reload();
+    }
+  }
+
+  // Escuchar eventos de clic en el documento para manejar la eliminación de categorías
+  document.addEventListener("click", (e) => {
+    const target = e.target as Element | null;
+    if (target && target.matches("button[title]")) {
+      const titleSong: string = target.getAttribute("title") || "";
+      // Eliminar la categoría
+      if (titleSong !== "") {
+        deleteSong(titleSong);
+        window.location.reload();
+      }
+    }
+  });
+
+  window.addEventListener("DOMContentLoaded", () => {
+    // Elementos del DOM
+    const btnCreateSong = (document.getElementById("btn-create-song") as HTMLButtonElement) || null;
+    const dialogCreate = (document.getElementById("modal-create-song") as HTMLDialogElement) || null;
+    const btnCloseModal = (document.getElementById("modal-create-song-close") as HTMLButtonElement) || null;
+    const input = Array.from(document.querySelectorAll(".modal-create-song-input")) as HTMLInputElement[];
+    const btnCreate = (document.getElementById("modal-create-song-create") as HTMLButtonElement) || null;
+
+    if (btnCreateSong && dialogCreate && btnCloseModal && btnCreate && input) {
+      // Click en btnCreateSong para abrir el modal
+      btnCreateSong.addEventListener("click", () => dialogCreate.showModal());
+
+      // Click en btnCreate para cerrar el modal
+      btnCloseModal.addEventListener("click", () => dialogCreate.close());
+
+      // Enter en el input para cerrar el modal
+      input.forEach((inputElement) => {
+        inputElement.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") {
+            event.preventDefault(); 
+            handleSong(input, dialogCreate);
+          }
+        });
+      });
+
+      // Crear una canción
+      btnCreate.addEventListener("click", () => handleSong(input, dialogCreate));
+    }
+  });
+</script>

@@ -14,6 +14,7 @@ const { href, title } = Astro.props;
       <span>&rarr;</span>
     </h2>
   </a>
+  <button title={title}>X</button>
 </li>
 
 <style>
@@ -33,8 +34,8 @@ const { href, title } = Astro.props;
     width: 100%;
     text-decoration: none;
     line-height: 1.4;
+    border-radius: 7px 0px 0px 7px;
     padding: calc(1.5rem - 1px);
-    border-radius: 8px;
     color: white;
     background-color: #23262d;
     opacity: 0.8;
@@ -54,5 +55,22 @@ const { href, title } = Astro.props;
   }
   .link-card:is(:hover, :focus-within) h2 {
     color: rgb(var(--accent-light));
+  }
+
+  button {
+    background: none;
+    border: none;
+    background-color: rgb(150, 168, 252);
+    color: rgb(96, 96, 212);
+    font-size: 1.25rem;
+    cursor: pointer;
+    margin-left: auto;
+    padding: 0.5rem;
+    border-radius: 0px 8px 8px 0px;
+  }
+
+  button:hover {
+    background-color: rgb(96, 96, 212);
+    color: white;
   }
 </style>

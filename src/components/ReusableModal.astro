@@ -1,0 +1,72 @@
+---
+import ReusableButton from "./ReusableButton.astro";
+
+const { id } = Astro.props;
+---
+
+<dialog id={id}>
+  <div id={id + "-content"}>
+    <slot />
+    <div class="buttons">
+      <ReusableButton id={id + "-create"}>Crear</ReusableButton>
+      <ReusableButton id={id + "-close"}>Cerrar</ReusableButton>
+    </div>
+  </div>
+</dialog>
+
+<style>
+  .buttons {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+  dialog {
+    padding: 0;
+    border: none;
+    border-radius: 16px;
+
+    background: transparent;
+    color: #fff;
+    max-width: 400px;
+    width: 90vw;
+    margin: auto;
+  }
+  dialog > div[id$="-content"] {
+    background: linear-gradient(135deg, #1972f8 0%, #4e95f1 100%);
+    border-radius: 16px;
+    padding: 2.5rem 2rem 2rem 2rem;
+    box-shadow: 0 2px 16px #000a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      border: 2px solid #2196f3;
+      background: #f4f8ff;
+      font-size: 1.1rem;
+      margin-bottom: 1.5rem;
+      transition:
+        border 0.2s,
+        box-shadow 0.2s;
+      box-shadow: 0 2px 8px #1972f11a;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #0d47a1;
+      box-shadow: 0 0 0 2px #2196f388;
+      background: #e3f2fd;
+    }
+    input::placeholder {
+      opacity: 1;
+    }
+  }
+  p {
+    margin: 1rem 0 2rem 0;
+    color: #e3f2fd;
+    text-align: center;
+  }
+</style>

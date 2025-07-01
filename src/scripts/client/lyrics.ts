@@ -1,20 +1,5 @@
-// Carga el JSON con las lyrics, almacenadas en cache.json
-export async function cargarLyrics() {
-  try {
-    const response = await fetch("/lyrics/cache.json");
-    if (!response.ok) {
-      throw new Error("No se pudo cargar el archivo JSON.");
-    }
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error("Error al cargar el archivo JSON:", error);
-    throw error;
-  }
-}
-
 // Dibuja dinamicamente según se lea el texto segun vaya leyendo el audio
-export function lyrics(transcript: string) {
+export function drawLyrics(transcript: string) {
   const lyricsP = document.getElementById("lyrics") as HTMLElement;
   const audioPlayer = document.getElementById("song") as HTMLAudioElement;
 

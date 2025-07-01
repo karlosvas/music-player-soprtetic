@@ -1,0 +1,31 @@
+---
+const { id } = Astro.props;
+---
+
+<button id={id}>
+  <slot />
+</button>
+
+<style>
+  button {
+    padding: 12px 28px;
+    background: linear-gradient(90deg, #1d79c4 0%, #0d47a1 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    box-shadow: 0 4px 16px rgba(33, 150, 243, 0.15);
+    cursor: pointer;
+    transition:
+      background 0.2s,
+      transform 0.2s;
+    outline: none;
+    margin-right: 10px;
+  }
+  button:hover {
+    background: linear-gradient(90deg, #42a5f5 0%, #1565c0 100%);
+    transform: scale(1.05);
+    box-shadow: 0 8px 24px rgba(33, 150, 243, 0.22);
+  }
+</style>

@@ -1,6 +1,7 @@
-import { defineConfig } from 'astro/config';
-import dotenv from 'dotenv';
-dotenv.config();
+import { defineConfig } from "astro/config";
+import vercel from "@astrojs/vercel/serverless";
 
-// https://astro.build/config
-export default defineConfig();
+export default defineConfig({
+    output: "server",
+    adapter: vercel(),
+});

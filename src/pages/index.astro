@@ -1,35 +1,106 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import FolderCard from "../components/FolderCard.astro";
-import { getNamesMP3 } from "../scripts/server/music";
+import ReusableButton from "../components/ReusableButton.astro";
+import ReusableModal from "../components/ReusableModal.astro";
+import { getAllCategories } from "../db/db";
+import Footer from "./footer.astro";
+import type { Category } from "../types/types";
 
-// Nombre de las cansiones
-export const mp3Files = await getNamesMP3();
-// Categorias de canciones
-export const Folders = ["SoporteTIC", "Jokes", "Personal"];
-const deepgramApiKey = import.meta.env.DEEPGRAM_API_KEY;
-if(!deepgramApiKey || deepgramApiKey == "") {
-  throw new Error("No se ha proporcionado una clave de API de Deepgram");
+// Categorías de canciones
+let Folders: Array<Category> = [];
+// Cargar las categorías
+try {
+  Folders = getAllCategories();
+} catch (error) {
+  console.error("Error al cargar las categorías:", error);
+  throw new Error("No se pudieron cargar las categorías de música");
 }
 
+// Verificar si la clave de API de Deepgram está configurada
+const deepgramApiKey = import.meta.env.DEEPGRAM_API_KEY;
+if (!deepgramApiKey || deepgramApiKey == "")
+  throw new Error("No se ha proporcionado una clave de API de Deepgram");
 ---
+
 <!-- Contenido principal del index -->
 <Layout title="Soporte TIC">
 <main>
-  <h1>Bienvenido a <span class="text-gradient"> Music IA </span></h1>
+  <h1>Bienvenid@ a <br><span class="text-gradient"> Soporte Tic Music </span></h1>
   <p class="instructions">
     Bienvenid@ a <code>la mejor experiencia sonora</code>
     <br />
-    <strong>Te deleitarás con temazos</strong> para todos los gustos y sabores.
+    <strong>Te deleitarás con temazos</strong> para todos los gustos, colores y sabores.
   </p>
 {
   Folders.map((folder) => (
-    <FolderCard href={`folder${folder}`} title={folder} />
+    <FolderCard href={`music/${folder.name}`} title={folder.name}/>
     <br />
   ))
 }
+  <ReusableButton id={"create-category"}>
+    Crear categoría
+  </ReusableButton>
+  <ReusableModal id={"modal-category"}>
+    <h2>Nueva categoría</h2>
+    <input id="input-category" type="text" placeholder="Nombre de la categoría" autocomplete="off" />
+  </ReusableModal>
 </main>
+<Footer />
 </Layout>
+
+<script>
+    import { createCategory, deleteCategory, deleteAllSongsCategory } from "@/scripts/client/categories.ts";
+
+      // Lógica para crear una nueva categoría
+      function handleCreateCategory(inputCategory: HTMLInputElement, modalDialog: HTMLDialogElement) {
+        const name = inputCategory.value.trim();
+        if (name) {
+          // Creamos la categoria cerramos el modal y recargamos la página
+          createCategory(name);
+          modalDialog.close();
+          window.location.reload();
+        }
+      }
+
+      // Escuchar eventos de clic en el documento para manejar la eliminación de categorías
+      document.addEventListener("click", (e) => {
+        const target = e.target as Element | null;
+        if (target && target.matches('button[title]')) {
+          const categoryName: string = target.getAttribute('title') || "";
+
+          // Eliminar la categoría
+          if (categoryName !== "") {
+            deleteCategory(categoryName);
+            deleteAllSongsCategory(categoryName);
+            window.location.reload();
+          }
+        }
+      });
+
+  
+      // Obtenemos todas las referencias del DOM
+      const btnCreateCategory = document.getElementById("create-category") as HTMLButtonElement | null;
+      const modalDialog = document.getElementById("modal-category") as HTMLDialogElement | null;
+      const btnCloseModal = document.getElementById("modal-category-close") as HTMLButtonElement | null;
+      const submitDataModal = document.getElementById("modal-category-create") as HTMLButtonElement | null;
+      const inputCategory = document.getElementById("input-category") as HTMLInputElement | null;
+      
+      if (btnCreateCategory && modalDialog && btnCloseModal && submitDataModal && inputCategory) {
+        // Abrir el modal
+        btnCreateCategory.addEventListener("click", () => modalDialog.showModal());
+        // Evento de darle click al boton de crear categoría o presionar Enter
+        inputCategory.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") handleCreateCategory(inputCategory, modalDialog);
+        });
+        // Enviar los datos de modo que se creará una nueva categoria
+        submitDataModal.addEventListener("click", () => handleCreateCategory(inputCategory, modalDialog));
+        // Cerrar el modal
+        btnCloseModal.addEventListener("click", () => modalDialog.close());
+      } else{
+        console.error("No se pudo encontrar el botón o el modal");
+      }
+</script>
 
 <style>
   main {
@@ -40,6 +111,7 @@ if(!deepgramApiKey || deepgramApiKey == "") {
     color: white;
     font-size: 20px;
     line-height: 1.6;
+    min-height: 80vh;
   }
   .astro-a {
     position: absolute;
