@@ -1,4 +1,4 @@
-import { transcribeFile } from "@/scripts/client/deepgram";
+import { transcribeFile } from "@/scripts/server/deepgram";
 import type { APIRoute } from "astro";
 
 // Añadir una nueva transcripción

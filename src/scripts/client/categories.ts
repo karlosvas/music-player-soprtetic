@@ -32,18 +32,11 @@ export async function deleteAllSongsCategory(category: string): Promise<void> {
 }
 
 // Llamada a la api para crear una canción
-export async function createSong(
-  name: string,
-  category: string,
-  transcript: string,
-  src: string,
-  prompt: string,
-  tag: string
-): Promise<Song> {
+export async function createSong(name: string, category: string, transcript: string, src: string): Promise<Song> {
   const res = await fetch("/api/music", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, category, transcript, src, prompt, tag }),
+    body: JSON.stringify({ name, category, transcript, src }),
   });
   return await res.json();
 }

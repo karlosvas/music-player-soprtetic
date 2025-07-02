@@ -53,8 +53,8 @@ const mp3Files = getSongsByCategory(nameCategory) || [];
           <>
             <h1>Crear Canción</h1>
               <input type="text" placeholder="Nombre de la canción" autocomplete="off" class="modal-create-song-input" />
-              <input type="text" placeholder="Tag, ej (rock, pop, techno)" autocomplete="off" class="modal-create-song-input" />
-            <textarea name="data" id="prompt" placeholder="Define como quieres que sea la canción"></textarea>
+              <!-- <input type="text" placeholder="Tag, ej (rock, pop, techno)" autocomplete="off" class="modal-create-song-input" /> -->
+            <!-- <textarea name="data" id="prompt" placeholder="Define como quieres que sea la canción"></textarea> -->
           </>
         </ReusableModal>
     </main>
@@ -159,10 +159,10 @@ const mp3Files = getSongsByCategory(nameCategory) || [];
       const normalizedName = name.toLowerCase().replace(/\s+/g, "-");
       const src =  "/photo/"+ normalizedName + ".png";
       const transcript: string = await createTranscript(normalizedName);
-      const prompt: string = (document.getElementById("prompt") as HTMLTextAreaElement).value.trim();
-      const tag: string = "music";
+      // const prompt: string = (document.getElementById("prompt") as HTMLTextAreaElement).value.trim();
+      // const tag: string = "music";
 
-      await createSong(name, nameCategory, transcript, src, prompt, tag)
+      await createSong(name, nameCategory, transcript, src)
       modalDialog.close();
       window.location.reload();
     }

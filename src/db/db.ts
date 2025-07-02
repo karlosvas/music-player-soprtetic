@@ -3,9 +3,17 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import type { Category, Song } from "../types/types";
 import { songs, category } from "./schema";
 import { eq } from "drizzle-orm";
+import * as path from "path";
+import * as fs from "fs";
 
-// Conexión a la base de datos
-const sqlite = new Database("database.db");
+const dbDir = "/tmp";
+if (process.env.VERCEL && !fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+
+// Usar una ruta adecuada según el entorno
+const dbPath = process.env.VERCEL ? path.join(dbDir, "music.db") : path.join(process.cwd(), "music.db");
+
+// Conexión a la base de datos - AQUÍ ES DONDE ESTABA EL ERROR
+const sqlite = new Database(dbPath);
 
 // Crear las tablas si no existen
 sqlite.exec(`

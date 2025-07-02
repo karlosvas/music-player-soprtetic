@@ -96,8 +96,7 @@ const nornamlizedSong = actualSong?.title.toLowerCase().replace(/\s+/g, "-") + "
 
 <script src="@/scripts/client/audio-player"></script>
 <script>
-  import { drawLyrics } from "@/scripts/client/lyrics";
-  import { transcribeFile } from "@/scripts/client/deepgram";
+  import { drawLyrics, transcribeFile } from "@/scripts/client/lyrics";
 
   // Obtenemos el titulo, y el párrafo de la letra
   const lyricsParagraph = document.getElementById("lyrics") as HTMLParagraphElement | null;

@@ -22,12 +22,12 @@ export const GET: APIRoute = async ({ request }) => {
 // Añadir una nueva categoría
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const { name, category, transcript, src, prompt, tag } = await request.json();
+    const { name, category, transcript, src } = await request.json();
 
-    if (!name || !category || !src || !transcript || !prompt || !tag)
+    if (!name || !category || !src || !transcript)
       return new Response(JSON.stringify({ error: "Missing required fields" }), { status: 400 });
 
-    createMP3Song(name, prompt, tag);
+    //  createMP3Song(name, prompt, tag);
     insertSong(name, category, transcript, src);
     return new Response(JSON.stringify({ success: true }), { status: 201 });
   } catch (error) {
@@ -52,33 +52,36 @@ export const DELETE: APIRoute = async ({ request }) => {
 };
 
 // Creamois el archivo .mp3 correspondiente
-export async function createMP3Song(title: string, prompt: string, tag: string): Promise<void> {
-  try {
-    // TODO: Añadimos el .mp3
-    const myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/json");
-    myHeaders.append("Authorization", apiKeyMusicApi);
+// export async function createMP3Song(title: string, prompt: string, tag: string): Promise<void> {
+//   try {
+//     // TODO: Añadimos el .mp3
+//     const myHeaders = new Headers();
+//     myHeaders.append("Content-Type", "application/json");
+//     myHeaders.append("Authorization", apiKeyMusicApi);
 
-    const raw = JSON.stringify({
-      custom_mode: true,
-      prompt: prompt,
-      title: title,
-      tags: tag,
-      gpt_description_prompt: "",
-      make_instrumental: false,
-      mv: "sonic-v3-5",
-    });
+//     const raw = JSON.stringify({
+//       custom_mode: true,
+//       prompt: prompt,
+//       title: title,
+//       tags: tag,
+//       gpt_description_prompt: "",
+//       make_instrumental: false,
+//       mv: "sonic-v3-5",
+//     });
 
-    fetch("https://api.musicapi.ai/api/v1/sonic/create", {
-      method: "POST",
-      headers: myHeaders,
-      body: raw,
-      redirect: "follow",
-    })
-      .then((response) => response.text())
-      .then((result) => console.log(result))
-      .catch((error) => console.log("error", error));
-  } catch (error) {
-    console.error("Error creating MP3 song:", error);
-  }
-}
+//     const resFetch = await fetch("https://api.musicapi.ai/api/v1/sonic/create", {
+//       method: "POST",
+//       headers: myHeaders,
+//       body: raw,
+//       redirect: "follow",
+//     });
+
+//     const res = await resFetch.json();
+
+//     const mp3Url = res.data?.url || res.url;
+
+//     if (!mp3Url) throw new Error("No MP3 URL encontrada en la respuesta");
+//   } catch (error) {
+//     console.error("Error creating MP3 song:", error);
+//   }
+// }

@@ -34,3 +34,21 @@ export function drawLyrics(transcript: string) {
 
   audioPlayer.addEventListener("timeupdate", () => resaltarTexto(audioPlayer.currentTime));
 }
+
+export async function transcribeFile(name: string): Promise<string> {
+  const res = await fetch("/api/transcribe", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ name }),
+  });
+
+  if (!res.ok) {
+    console.error("Error al transcribir el archivo:", res.statusText);
+    return "Error al transcribir el archivo";
+  } else {
+    const data = await res.json();
+    return data;
+  }
+}
